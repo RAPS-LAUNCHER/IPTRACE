@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# Vérifier si 'jq' est installé, sinon, l'installer
+if ! command -v jq &>/dev/null; then
+    echo "Le paquet 'jq' n'est pas installé. Installation en cours..."
+    if [ "$(uname)" == "Linux" ]; then
+        sudo apt-get update
+        sudo apt-get install -y jq
+    elif [ "$(uname)" == "Darwin" ]; then
+        brew install jq
+    else
+        echo "Système d'exploitation non pris en charge. Veuillez installer 'jq' manuellement."
+        exit 1
+    fi
+fi
+
+clear
+echo " _____ _____ _______ _____            _____ ______   "
+echo "|_   _|  __ \__   __|  __ \     /\   / ____|  ____|  "
+echo "  | | | |__| | | |  | |__| |   /  \ | |    | |__     "
+echo "  | | |  ___/  | |  |  _  /   / /\ \| |    |  __|    "
+echo " _| |_| |      | |  | | \ \  / ____ \ |____| |____   "
+echo "|_____|_|      |_|  |_|  \_\/_/    \_\_____|______|  "
+echo " TRABBIT                                             "
+echo "                                                     "
+echo "                                                     "
+
+# Fonction pour obtenir les informations sur une adresse IP
+get_ip_info() {
+  curl -s "https://ipinfo.io/$1/json"
+}
+
+# Fonction pour obtenir les informations sur votre adresse IP
+get_own_ip_info() {
+  curl -s "https://ipinfo.io/json"
+}
+
+# Vérifier les arguments
+if [ $# -eq 0 ]; then
+  echo "Usage: iptrace [OPTIONS]"
+  echo "Options:"
+  echo "  -t IP       Trace the specified IP address."
+  echo "  -m          Trace your own IP address."
+  exit 1
+fi
+
+# Parcourir les arguments
+while getopts "t:m" option; do
+  case $option in
+    t)
+      # Tracer l'adresse IP spécifiée
+      target_ip="$OPTARG"
+      ip_info=$(get_ip_info $target_ip)
+      ;;
+    m)
+      # Tracer votre propre adresse IP
+      ip_info=$(get_own_ip_info)
+      ;;
+    *)
+      show_help
+      ;;
+  esac
+done
+
+# Afficher les informations
+echo "IP Address    >   $(echo $ip_info | jq -r '.ip')"
+echo "Country code  >   $(echo $ip_info | jq -r '.country')"
+echo "Country       >   $(echo $ip_info | jq -r '.country_name')"
+echo "Date & Time   >   $(date)"
+echo "Region code   >   $(echo $ip_info | jq -r '.region')"
+echo "Region        >   $(echo $ip_info | jq -r '.region_name')"
+echo "City          >   $(echo $ip_info | jq -r '.city')"
+echo "Zip code      >   $(echo $ip_info | jq -r '.postal')"
+echo "Time zone     >   $(echo $ip_info | jq -r '.timezone')"
+echo "ISP           >   $(echo $ip_info | jq -r '.org')"
+echo "Organization  >   $(echo $ip_info | jq -r '.org_name')"
+echo "ASN           >   $(echo $ip_info | jq -r '.asn')"
+echo "Latitude      >   $(echo $ip_info | jq -r '.loc' | cut -d ',' -f 1)"
+echo "Longitude     >   $(echo $ip_info | jq -r '.loc' | cut -d ',' -f 2)"
+echo "Location      >   $(echo $ip_info | jq -r '.loc')"
